@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FF14 装備IL管理</title>
+    <style>
+      :root {
+        --green: #93d8a0;
+        --green-dark: #2e7d4f;
+        --red: #e57373;
+        --red-text: #b71c1c;
+        --bar: #f08c2e;
+        --border: #d0d4da;
+        --head-bg: #f3f5f8;
+        --bg: #fafbfc;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: var(--bg);
+        color: #222;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: #888;
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .hint {
+        color: #999;
+        font-size: 11px;
+        margin-bottom: 16px;
+      }
+      .hint b {
+        color: #f08c2e;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+      .toolbar label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .toolbar input[type="number"] {
+        width: 70px;
+        padding: 4px 6px;
+        font-size: 13px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+      }
+      .btn {
+        padding: 6px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        transition: 0.15s;
+      }
+      .btn:hover {
+        background: #eef1f5;
+      }
+      .clip {
+        font-size: 12px;
+        color: #666;
+        padding: 4px 10px;
+        background: #fff7ee;
+        border: 1px solid #f0d6b5;
+        border-radius: 6px;
+      }
+      .clip b {
+        color: #d9760f;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: #555;
+        align-items: center;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .chip {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .chip.g {
+        background: var(--green);
+      }
+      .chip.r {
+        background: var(--red);
+      }
+      .chip.b {
+        background: var(--bar);
+        width: 5px;
+        height: 16px;
+        border-radius: 2px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 940px;
+        table-layout: fixed;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 0;
+        text-align: center;
+      }
+      thead th {
+        background: var(--head-bg);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px 6px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      thead th.corner {
+        width: 44px;
+      }
+      tbody th {
+        background: var(--head-bg);
+        font-size: 13px;
+        font-weight: 700;
+        width: 44px;
+        padding: 6px 2px;
+        position: relative;
+      }
+      tbody th .pmark {
+        color: var(--green-dark);
+        font-weight: 700;
+        margin-left: 2px;
+      }
+      td {
+        position: relative;
+        height: 48px;
+        width: 128px;
+        overflow: hidden;
+      }
+      td.cell {
+        background: #fff;
+      }
+      td.green {
+        background: var(--green);
+      }
+      td.red {
+        background: var(--red);
+      }
+      td.done {
+        background: var(--green);
+      }
+      td.colmin::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: var(--bar);
+        z-index: 1;
+      }
+      .cellbox {
+        display: flex;
+        align-items: stretch;
+        height: 48px;
+      }
+      .il-val,
+      .kind {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        padding: 0 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .il-val {
+        font-size: 16px;
+        font-weight: 600;
+        border-right: 1px dashed rgba(0, 0, 0, 0.12);
+      }
+      td.red .il-val {
+        color: var(--red-text);
+        font-weight: 700;
+      }
+      .kind {
+        font-size: 12px;
+        color: #555;
+      }
+      td.red .kind {
+        color: #7a1414;
+      }
+      .kind.empty {
+        color: #c4c4c4;
+      }
+
+      /* 編集ポップ：IL側／種別側それぞれの内側に寄せて表示 */
+      .editing-pop {
+        position: absolute;
+        z-index: 10;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #fff;
+        border: 2px solid var(--bar);
+        border-radius: 6px;
+        padding: 3px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        white-space: nowrap;
+      }
+      .editing-pop.left {
+        left: 2px;
+      }
+      .editing-pop.right {
+        right: 2px;
+      }
+      .il-select,
+      .kind-select {
+        font-size: 15px;
+        padding: 3px;
+        min-width: 92px;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        background: #fff;
+      }
+      .il-edit,
+      .kind-input {
+        font-size: 15px;
+        width: 88px;
+        text-align: center;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        padding: 3px;
+      }
+      .hidden {
+        display: none;
+      }
+      .footer {
+        margin-top: 14px;
+        font-size: 11px;
+        color: #999;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FF14 装備IL管理</h1>
+    <div class="sub">黄金のレガシー / 戦闘職装備のアイテムレベル一覧</div>
+    <div class="hint">
+      使い方：セルをクリックで編集。最後に確定した「IL＋種別」を覚えておき、別セルを
+      <b>Shift＋クリック</b> すると同じ内容をまとめて貼り付けます。
+    </div>
+
+    <div class="toolbar">
+      <div>
+        <label>目標IL：</label>
+        <input type="number" id="targetIL" value="790" step="5" min="0" />
+      </div>
+      <button class="btn" id="resetAll">全リセット</button>
+      <button class="btn" id="exportBtn">エクスポート</button>
+      <button class="btn" id="importBtn">インポート</button>
+      <input
+        type="file"
+        id="importFile"
+        class="hidden"
+        accept="application/json"
+      />
+      <div class="clip" id="clipInfo">コピー内容：<b>なし</b></div>
+      <div class="legend" style="margin-left: auto">
+        <span><i class="chip g"></i>目標IL到達</span>
+        <span><i class="chip r"></i>部位内で最低</span>
+        <span><i class="chip b"></i>系統内で最低</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="grid"></table>
+    </div>
+
+    <div class="footer">
+      各セルは「左＝IL／右＝装備種別」です。部位（行）が全ロール目標到達すると、左の部位名に✓が付きます。データはこのブラウザ内（localStorage）に保存されます。別PCへ移すときはエクスポート／インポートを使ってください。
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const ROLES = [
+          "ディフェンダー",
+          "スレイヤー",
+          "ストライカー",
+          "スカウト",
+          "レンジャー",
+          "キャスター",
+          "ヒーラー",
+        ];
+        const PARTS = [
+          "頭",
+          "胴",
+          "手",
+          "脚",
+          "足",
+          "耳",
+          "首",
+          "腕",
+          "指1",
+          "指2",
+        ];
+        const ACC_PARTS = ["耳", "首", "腕", "指1", "指2"];
+        const KINDS = [
+          "",
+          "零式",
+          "トークン",
+          "新式",
+          "Nレイド",
+          "アライアンス",
+          "ID装備",
+        ];
+
+        const ACC_LINK = {
+          スレイヤー: "アタッカー",
+          ストライカー: "アタッカー",
+          スカウト: "レンジャー",
+          レンジャー: "レンジャー",
+        };
+        function accGroup(role) {
+          return ACC_LINK[role] || role;
+        }
+
+        const IL_OPTIONS = [];
+        for (let v = 790; v >= 720; v -= 5) IL_OPTIONS.push(v);
+
+        const STORE_KEY = "ff14_il_manager_v1";
+
+        let data = {};
+        let targetIL = 790;
+        let clipboard = null; // { il, kind }
+
+        function emptyData() {
+          const d = {};
+          for (const p of PARTS) {
+            d[p] = {};
+            for (const r of ROLES) {
+              d[p][r] = { il: null, kind: "" };
+            }
+          }
+          return d;
+        }
+
+        function sampleData() {
+          const d = emptyData();
+          const setBoth = (part, role, il, kind) => {
+            d[part][role] = { il, kind };
+            if (ACC_PARTS.includes(part)) {
+              const g = accGroup(role);
+              for (const r of ROLES) {
+                if (accGroup(r) === g) d[part][r] = { il, kind };
+              }
+            }
+          };
+          setBoth("頭", "スレイヤー", 790, "トークン");
+          setBoth("胴", "スレイヤー", 790, "零式");
+          setBoth("手", "スレイヤー", 790, "トークン");
+          setBoth("耳", "スレイヤー", 790, "トークン");
+          setBoth("指1", "スレイヤー", 790, "零式");
+          setBoth("指2", "スレイヤー", 790, "トークン");
+          return d;
+        }
+
+        function load() {
+          try {
+            const raw = localStorage.getItem(STORE_KEY);
+            if (raw) {
+              const obj = JSON.parse(raw);
+              data = obj.data || emptyData();
+              targetIL = obj.targetIL ?? 790;
+              for (const p of PARTS) {
+                data[p] = data[p] || {};
+                for (const r of ROLES) {
+                  data[p][r] = data[p][r] || { il: null, kind: "" };
+                }
+              }
+              return;
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+          data = sampleData();
+          targetIL = 790;
+        }
+
+        function save() {
+          localStorage.setItem(STORE_KEY, JSON.stringify({ data, targetIL }));
+        }
+
+        function setCell(part, role, patch) {
+          Object.assign(data[part][role], patch);
+          if (ACC_PARTS.includes(part)) {
+            const g = accGroup(role);
+            for (const r of ROLES) {
+              if (accGroup(r) === g && r !== role)
+                Object.assign(data[part][r], patch);
+            }
+          }
+        }
+
+        // クリップボードへ記録＆表示更新
+        function setClipboard(cb) {
+          clipboard = cb;
+          const el = document.getElementById("clipInfo");
+          if (cb && cb.il != null) {
+            el.innerHTML = `コピー内容：<b>IL${cb.il}${cb.kind ? " / " + cb.kind : ""}</b>（Shift+クリックで貼付）`;
+          } else {
+            el.innerHTML = `コピー内容：<b>なし</b>`;
+          }
+        }
+
+        function computeHighlights() {
+          const colMin = {},
+            rowMin = {},
+            rowDone = {},
+            colDone = {};
+          for (const r of ROLES) {
+            let m = Infinity,
+              allDone = true,
+              anyVal = false;
+            for (const p of PARTS) {
+              const v = data[p][r].il;
+              if (v != null) {
+                anyVal = true;
+                if (v < m) m = v;
+                if (v < targetIL) allDone = false;
+              } else allDone = false;
+            }
+            colMin[r] = m === Infinity ? null : m;
+            colDone[r] = anyVal && allDone;
+          }
+          for (const p of PARTS) {
+            let m = Infinity,
+              allDone = true,
+              anyVal = false;
+            for (const r of ROLES) {
+              const v = data[p][r].il;
+              if (v != null) {
+                anyVal = true;
+                if (v < m) m = v;
+                if (v < targetIL) allDone = false;
+              } else allDone = false;
+            }
+            rowMin[p] = m === Infinity ? null : m;
+            rowDone[p] = anyVal && allDone;
+          }
+          return { colMin, rowMin, rowDone, colDone };
+        }
+
+        const table = document.getElementById("grid");
+
+        function render() {
+          const { colMin, rowMin, rowDone, colDone } = computeHighlights();
+          let html = "<thead><tr><th class='corner'></th>";
+          for (const r of ROLES) html += `<th>${r}</th>`;
+          html += "</tr></thead><tbody>";
+
+          for (const p of PARTS) {
+            const done = rowDone[p];
+            html += `<tr><th>${p}${done ? '<span class="pmark">✓</span>' : ""}</th>`;
+            for (const r of ROLES) {
+              const cell = data[p][r];
+              const il = cell.il;
+              let cls = "cell";
+              if (il != null) {
+                if (il >= targetIL) cls = "green";
+                // 目標IL未満のときだけ、部位内最低を赤にする
+                else if (!done && rowMin[p] != null && il === rowMin[p])
+                  cls = "red";
+              }
+              if (done) cls = "done";
+              // 系統内最低ライン：目標IL未満のときだけ出す（系統が完了していれば出さない）
+              const colminCls =
+                !colDone[r] &&
+                il != null &&
+                il < targetIL &&
+                colMin[r] != null &&
+                il === colMin[r]
+                  ? " colmin"
+                  : "";
+              const ilText = il != null ? il : "—";
+              const kindText = cell.kind || "";
+              const kindCls = kindText ? "kind" : "kind empty";
+              html += `<td class="${cls}${colminCls}" data-part="${p}" data-role="${r}">
+            <div class="cellbox">
+              <div class="il-val" data-act="il">${ilText}</div>
+              <div class="${kindCls}" data-act="kind">${kindText || "種別"}</div>
+            </div>
+          </td>`;
+            }
+            html += "</tr>";
+          }
+          html += "</tbody>";
+          table.innerHTML = html;
+        }
+
+        // 開いているポップを閉じる（保存はせず元の表示に戻す）
+        function closeOpenPop() {
+          if (table.querySelector(".editing-pop")) render();
+        }
+
+        table.addEventListener("click", (e) => {
+          const td = e.target.closest("td");
+          // ポップ自体のクリックは無視（中の操作を邪魔しない）
+          if (e.target.closest(".editing-pop")) return;
+          // ほかのセルや空白をクリックしたら、開いているポップを閉じる
+          if (!td) {
+            closeOpenPop();
+            return;
+          }
+
+          const part = td.dataset.part,
+            role = td.dataset.role;
+
+          // Shift＋クリックで貼り付け
+          if (e.shiftKey && clipboard && clipboard.il != null) {
+            closeOpenPop();
+            setCell(part, role, { il: clipboard.il, kind: clipboard.kind });
+            save();
+            render();
+            return;
+          }
+
+          // 別のセルが開いていたら一旦閉じてから開き直す
+          if (
+            table.querySelector(".editing-pop") &&
+            !td.querySelector(".editing-pop")
+          ) {
+            render();
+          }
+          if (td.querySelector(".editing-pop")) return;
+
+          if (e.target.closest(".il-val")) openILEditor(td, part, role);
+          else if (e.target.closest(".kind")) openKindEditor(td, part, role);
+        });
+
+        function openPop(td, side) {
+          const pop = document.createElement("div");
+          pop.className = "editing-pop " + (side === "il" ? "left" : "right");
+          td.appendChild(pop);
+          return pop;
+        }
+
+        function openILEditor(td, part, role) {
+          const current = data[part][role].il;
+          const pop = openPop(td, "il");
+
+          const commit = (val) => {
+            let il = val === "" ? null : parseInt(val, 10);
+            if (Number.isNaN(il)) il = null;
+            setCell(part, role, { il });
+            if (il != null)
+              setClipboard({ il, kind: data[part][role].kind || "" });
+            save();
+            render();
+          };
+
+          // 手入力欄を直接出すヘルパー
+          const showManualInput = (initial) => {
+            pop.innerHTML = "";
+            const inp = document.createElement("input");
+            inp.type = "number";
+            inp.className = "il-edit";
+            inp.step = "5";
+            inp.value = initial != null ? initial : "";
+            pop.appendChild(inp);
+            inp.focus();
+            inp.select();
+            inp.addEventListener("blur", () => commit(inp.value));
+            inp.addEventListener("keydown", (ev) => {
+              if (ev.key === "Enter") inp.blur();
+              if (ev.key === "Escape") render();
+            });
+          };
+
+          const isManual = current != null && !IL_OPTIONS.includes(current);
+          // すでに手入力値ならいきなり入力欄を出す
+          if (isManual) {
+            showManualInput(current);
+            return;
+          }
+
+          const sel = document.createElement("select");
+          sel.className = "il-select";
+          sel.innerHTML =
+            `<option value="">（なし）</option>` +
+            IL_OPTIONS.map((v) => `<option value="${v}">${v}</option>`).join(
+              "",
+            ) +
+            `<option value="__manual">手入力…</option>`;
+          sel.value = current == null ? "" : String(current);
+          pop.appendChild(sel);
+          sel.focus();
+
+          const onPick = () => {
+            if (sel.value === "__manual") showManualInput(current);
+            else commit(sel.value);
+          };
+          sel.addEventListener("change", onPick);
+          sel.addEventListener("blur", () => {
+            if (sel.value !== "__manual") commit(sel.value);
+          });
+        }
+
+        function openKindEditor(td, part, role) {
+          const current = data[part][role].kind || "";
+          const pop = openPop(td, "kind");
+
+          const commit = (val) => {
+            setCell(part, role, { kind: val });
+            const il = data[part][role].il;
+            if (il != null) setClipboard({ il, kind: val });
+            save();
+            render();
+          };
+
+          const showManualInput = (initial) => {
+            pop.innerHTML = "";
+            const inp = document.createElement("input");
+            inp.type = "text";
+            inp.className = "kind-input";
+            inp.value = initial || "";
+            pop.appendChild(inp);
+            inp.focus();
+            inp.select();
+            inp.addEventListener("blur", () => commit(inp.value.trim()));
+            inp.addEventListener("keydown", (ev) => {
+              if (ev.key === "Enter") inp.blur();
+              if (ev.key === "Escape") render();
+            });
+          };
+
+          const isManual = current !== "" && !KINDS.includes(current);
+          if (isManual) {
+            showManualInput(current);
+            return;
+          }
+
+          const sel = document.createElement("select");
+          sel.className = "kind-select";
+          sel.innerHTML =
+            KINDS.map(
+              (k) => `<option value="${k}">${k || "（なし）"}</option>`,
+            ).join("") + `<option value="__manual">手入力…</option>`;
+          sel.value = current;
+          pop.appendChild(sel);
+          sel.focus();
+
+          const onPick = () => {
+            if (sel.value === "__manual") showManualInput(current);
+            else commit(sel.value);
+          };
+          sel.addEventListener("change", onPick);
+          sel.addEventListener("blur", () => {
+            if (sel.value !== "__manual") commit(sel.value);
+          });
+        }
+
+        const targetInput = document.getElementById("targetIL");
+        function syncTarget() {
+          targetInput.value = targetIL;
+        }
+        targetInput.addEventListener("change", () => {
+          const v = parseInt(targetInput.value, 10);
+          targetIL = Number.isNaN(v) ? 790 : v;
+          save();
+          render();
+        });
+
+        document.getElementById("resetAll").addEventListener("click", () => {
+          if (confirm("すべてのILと装備種別を消去します。よろしいですか？")) {
+            data = emptyData();
+            save();
+            render();
+          }
+        });
+
+        document.getElementById("exportBtn").addEventListener("click", () => {
+          const blob = new Blob([JSON.stringify({ data, targetIL }, null, 2)], {
+            type: "application/json",
+          });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "ff14_il.json";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+
+        const importFile = document.getElementById("importFile");
+        document
+          .getElementById("importBtn")
+          .addEventListener("click", () => importFile.click());
+        importFile.addEventListener("change", () => {
+          const f = importFile.files[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const obj = JSON.parse(reader.result);
+              data = obj.data || emptyData();
+              targetIL = obj.targetIL ?? 790;
+              for (const p of PARTS) {
+                data[p] = data[p] || {};
+                for (const r of ROLES) {
+                  data[p][r] = data[p][r] || { il: null, kind: "" };
+                }
+              }
+              syncTarget();
+              save();
+              render();
+            } catch (e) {
+              alert("読み込みに失敗しました：" + e.message);
+            }
+          };
+          reader.readAsText(f);
+          importFile.value = "";
+        });
+
+        load();
+        syncTarget();
+        render();
+      })();
+    </script>
+  </body>
+</html>
