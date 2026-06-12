@@ -150,6 +150,11 @@
 
     <div class="grid" id="grid"></div>
 
+    <details class="dev-section">
+      <summary>🚧 開発中のツール</summary>
+      <div class="dev-list" id="dev-list"></div>
+    </details>
+
     <footer>新ツール追加はHTML内 <code>TOOLS</code> 配列を編集</footer>
 
     <script>
@@ -170,7 +175,22 @@
           desc: "ヘビー級零式4層前半のやつ",
           icon: "🌀",
         },
+        {
+          basename: "want_to_list",
+          title: "やりたいこと置き場",
+          desc: "ゆるいtodoリストツール",
+          icon: "🐿️",
+        },
+
         // 今後ツール増えたらここに追加
+      ];
+
+      const DEV_TOOLS = [
+        {
+          filename: "materia_sim",
+          title: "禁断シミュ",
+        },
+        // 開発中のものがあればここに追加
       ];
 
       const ORDER_KEY = "launcher_tool_order";

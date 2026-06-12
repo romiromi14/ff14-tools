@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FF14 マテリア禁断 必要数シミュレーター</title>
+    <style>
+      :root {
+        --bg: #1a1c23;
+        --panel: #252833;
+        --panel2: #2e3240;
+        --line: #3a3f4e;
+        --text: #e6e8ee;
+        --sub: #9aa0b0;
+        --accent: #7aa2f7;
+        --accent2: #9ece6a;
+        --warn: #e0af68;
+        --red: #f7768e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .desc {
+        color: var(--sub);
+        font-size: 12px;
+        margin-bottom: 16px;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        background: var(--panel);
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      .toolbar label {
+        color: var(--sub);
+        font-size: 12px;
+      }
+      select,
+      button,
+      input[type="number"] {
+        background: var(--panel2);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+      select,
+      button {
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #1a1c23;
+        border: none;
+        font-weight: 600;
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      @media (min-width: 1100px) {
+        .layout {
+          grid-template-columns: 1.4fr 1fr;
+        }
+      }
+      .card {
+        background: var(--panel);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+      .card h2 {
+        font-size: 15px;
+        margin: 0 0 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card h2 .hint {
+        font-size: 11px;
+        color: var(--sub);
+        font-weight: 400;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        text-align: center;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        color: var(--sub);
+        font-weight: 600;
+        background: var(--panel2);
+      }
+      .part-name {
+        text-align: left;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .rate-tag {
+        font-size: 10px;
+        color: var(--sub);
+        display: block;
+      }
+      td select {
+        padding: 3px 4px;
+        font-size: 11px;
+        width: 100%;
+        min-width: 92px;
+      }
+      .slot-confirmed {
+        background: rgba(122, 162, 247, 0.08);
+      }
+      .matgrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+      }
+      .matbox {
+        background: var(--panel2);
+        border-radius: 8px;
+        padding: 10px 12px;
+        border-left: 3px solid var(--accent);
+      }
+      .matbox .name {
+        font-size: 12px;
+        color: var(--sub);
+        margin-bottom: 4px;
+      }
+      .matbox .big {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--accent2);
+      }
+      .matbox .big small {
+        font-size: 13px;
+        color: var(--sub);
+        font-weight: 400;
+      }
+      .matbox .extra {
+        font-size: 11px;
+        color: var(--warn);
+        margin-top: 4px;
+      }
+      .toggle-cell {
+        white-space: nowrap;
+      }
+      .toggle-cell input {
+        transform: scale(1.2);
+        cursor: pointer;
+      }
+      .legend {
+        font-size: 11px;
+        color: var(--sub);
+        margin-top: 8px;
+      }
+      .legend span {
+        margin-right: 14px;
+      }
+      .off-row {
+        opacity: 0.35;
+      }
+      .note {
+        font-size: 11px;
+        color: var(--sub);
+        margin-top: 6px;
+      }
+      /* ステータス計算エリア */
+      .stat-inputs {
+        display: grid;
+        grid-template-columns: auto repeat(3, 1fr);
+        gap: 6px 8px;
+        align-items: center;
+      }
+      .stat-inputs .rowlabel {
+        color: var(--sub);
+        font-size: 12px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      .stat-inputs .colhead {
+        color: var(--sub);
+        font-size: 11px;
+        text-align: center;
+        font-weight: 600;
+      }
+      .stat-inputs input {
+        width: 100%;
+        text-align: right;
+        padding: 5px 8px;
+      }
+      .final-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .statbox {
+        background: var(--panel2);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        border-top: 3px solid var(--accent2);
+      }
+      .statbox .label {
+        font-size: 12px;
+        color: var(--sub);
+      }
+      .statbox .val {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text);
+      }
+      .statbox .breakdown {
+        font-size: 10.5px;
+        color: var(--sub);
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .statbox .breakdown b {
+        color: var(--accent2);
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FF14 マテリア禁断 必要数シミュレーター</h1>
+    <div class="desc">
+      各スロットのマテリア種を編集すると、必要数と最終ステータスが自動で再計算されます。<strong>95%</strong>＝ほぼ確実に成功させたい場合の安心個数（メイン）、80%・期待値は参考値です。
+    </div>
+
+    <div class="toolbar">
+      <label>ジョブ系統</label>
+      <select id="jobSelect">
+        <option value="gatherer">ギャザラー</option>
+        <option value="crafter">クラフター</option>
+        <option value="battle">戦闘職</option>
+      </select>
+      <button id="checkAll">全部位ON</button>
+      <button id="uncheckAll">全部位OFF</button>
+      <button id="resetBtn">初期構成に戻す</button>
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2>装備別 編集＆必要数</h2>
+          <div id="tableWrap"></div>
+          <div class="note">
+            禁断成功率：1個目17% / 2個目10% / 3個目7% /
+            4個目5%。確定枠2の部位は3個目(7%)までで5枠が埋まります。
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>全身合計（種類別）<span class="hint">※確定枠の分も含む</span></h2>
+          <div id="totalGrid" class="matgrid"></div>
+        </div>
+
+        <div class="card">
+          <h2>
+            最終ステータス計算
+            <span class="hint">獲得力＝達識 / 技術力＝博識 / GP＝器識</span>
+          </h2>
+          <div class="stat-inputs">
+            <div class="rowlabel"></div>
+            <div class="colhead">獲得力</div>
+            <div class="colhead">技術力</div>
+            <div class="colhead">GP</div>
+
+            <div class="rowlabel">ベース（マテリアなし）</div>
+            <input type="number" id="base_g" value="0" />
+            <input type="number" id="base_c" value="0" />
+            <input type="number" id="base_p" value="400" />
+
+            <div class="rowlabel">食事・薬 補正</div>
+            <input type="number" id="buff_g" value="0" />
+            <input type="number" id="buff_c" value="0" />
+            <input type="number" id="buff_p" value="0" />
+
+            <div class="rowlabel">オーバーフロー等 補正</div>
+            <input type="number" id="ovf_g" value="0" />
+            <input type="number" id="ovf_c" value="0" />
+            <input type="number" id="ovf_p" value="0" />
+          </div>
+          <div class="final-stats" id="finalStats"></div>
+          <div class="note">
+            ベースは「マテリアを全く付けていない装備＋素ステ」のキャラ画面数値を入力してください。マテリア上昇分は左表から自動加算されます（達識Hアルテマ+36/Hオメガ+20、博識Hアルテマ+36/Hオメガ+20、器識Hアルテマ+11/Hオメガ+9）。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ===== 設定 =====
+      const RATES = [0.17, 0.1, 0.07, 0.05]; // 禁断n個目の成功率
+
+      const MATERIA_TYPES = [
+        "達識Hアルテマ",
+        "博識Hアルテマ",
+        "器識Hアルテマ",
+        "達識Hオメガ",
+        "博識Hオメガ",
+        "器識Hオメガ",
+        "なし",
+      ];
+
+      // マテリア種 → ステータス上昇 { stat:'g'|'c'|'p', value }
+      // g=獲得力(達識), c=技術力(博識), p=GP(器識)
+      const MATERIA_STATS = {
+        達識Hアルテマ: { stat: "g", value: 36 },
+        達識Hオメガ: { stat: "g", value: 20 },
+        博識Hアルテマ: { stat: "c", value: 36 },
+        博識Hオメガ: { stat: "c", value: 20 },
+        器識Hアルテマ: { stat: "p", value: 11 },
+        器識Hオメガ: { stat: "p", value: 9 },
+      };
+
+      const PRESETS = {
+        gatherer: [
+          {
+            name: "主道具",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "副道具",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "頭",
+            confirmed: 2,
+            slots: [
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "器識Hアルテマ",
+              "博識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "胴",
+            confirmed: 2,
+            slots: [
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "博識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "手",
+            confirmed: 2,
+            slots: [
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "博識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "脚",
+            confirmed: 2,
+            slots: [
+              "達識Hアルテマ",
+              "達識Hアルテマ",
+              "博識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "足",
+            confirmed: 2,
+            slots: [
+              "博識Hアルテマ",
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "器識Hオメガ",
+              "博識Hオメガ",
+            ],
+          },
+          {
+            name: "耳",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "器識Hオメガ",
+            ],
+          },
+          {
+            name: "首",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "器識Hオメガ",
+            ],
+          },
+          {
+            name: "腕",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "器識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "器識Hオメガ",
+            ],
+          },
+          {
+            name: "指1",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "達識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "器識Hオメガ",
+            ],
+          },
+          {
+            name: "指2",
+            confirmed: 1,
+            slots: [
+              "博識Hアルテマ",
+              "達識Hアルテマ",
+              "達識Hオメガ",
+              "博識Hオメガ",
+              "器識Hオメガ",
+            ],
+          },
+        ],
+        crafter: null,
+        battle: null,
+      };
+      PRESETS.crafter = JSON.parse(JSON.stringify(PRESETS.gatherer));
+      PRESETS.battle = JSON.parse(JSON.stringify(PRESETS.gatherer));
+
+      // ===== 計算 =====
+      function trialsFor(p, target) {
+        if (p >= 1) return 1;
+        let n = Math.ceil(Math.log(1 - target) / Math.log(1 - p));
+        return Math.max(1, n);
+      }
+
+      function slotStats(slotIndex, confirmed) {
+        if (slotIndex < confirmed) {
+          return { kind: "confirmed", rate: 1, exp: 1, e80: 1, e95: 1 };
+        }
+        const meldIdx = slotIndex - confirmed;
+        const p = RATES[meldIdx];
+        return {
+          kind: "meld",
+          rate: p,
+          exp: 1 / p,
+          e80: trialsFor(p, 0.8),
+          e95: trialsFor(p, 0.95),
+        };
+      }
+
+      // ===== 状態 =====
+      let currentJob = "gatherer";
+      let state = [];
+      let enabled = [];
+
+      function loadJob(job) {
+        currentJob = job;
+        state = JSON.parse(JSON.stringify(PRESETS[job]));
+        enabled = state.map(() => true);
+        render();
+      }
+
+      function fmt(n) {
+        return (Math.round(n * 10) / 10).toFixed(1);
+      }
+
+      function render() {
+        renderTable();
+        renderTotals();
+        renderFinalStats();
+      }
+
+      function renderTable() {
+        let html = `<table><thead><tr>
+    <th>ON</th><th>部位</th>
+    <th>枠1</th><th>枠2</th><th>枠3</th><th>枠4</th><th>枠5</th>
+  </tr></thead><tbody>`;
+
+        state.forEach((part, pi) => {
+          const offCls = enabled[pi] ? "" : "off-row";
+          html += `<tr class="${offCls}">
+      <td class="toggle-cell"><input type="checkbox" data-part="${pi}" class="toggle" ${enabled[pi] ? "checked" : ""}></td>
+      <td class="part-name">${part.name}</td>`;
+          for (let s = 0; s < 5; s++) {
+            const st = slotStats(s, part.confirmed);
+            if (st.kind === "confirmed") {
+              html += `<td class="slot-confirmed">
+          <span class="rate-tag">確定</span>
+          <select data-part="${pi}" data-slot="${s}" class="matsel">${optionsFor(part.slots[s])}</select>
+        </td>`;
+            } else {
+              html += `<td>
+          <span class="rate-tag">${Math.round(st.rate * 100)}% / 95%:${st.e95}個</span>
+          <select data-part="${pi}" data-slot="${s}" class="matsel">${optionsFor(part.slots[s])}</select>
+        </td>`;
+            }
+          }
+          html += `</tr>`;
+        });
+
+        html += `</tbody></table>`;
+        document.getElementById("tableWrap").innerHTML = html;
+
+        document.querySelectorAll(".toggle").forEach((el) => {
+          el.addEventListener("change", (e) => {
+            enabled[+e.target.dataset.part] = e.target.checked;
+            render();
+          });
+        });
+        document.querySelectorAll(".matsel").forEach((el) => {
+          el.addEventListener("change", (e) => {
+            const pi = +e.target.dataset.part,
+              s = +e.target.dataset.slot;
+            state[pi].slots[s] = e.target.value;
+            renderTotals();
+            renderFinalStats();
+          });
+        });
+      }
+
+      function optionsFor(selected) {
+        return MATERIA_TYPES.map(
+          (m) =>
+            `<option value="${m}" ${m === selected ? "selected" : ""}>${m}</option>`,
+        ).join("");
+      }
+
+      function computeTotals() {
+        const totals = {};
+        MATERIA_TYPES.forEach((m) => {
+          if (m !== "なし") totals[m] = { exp: 0, e80: 0, e95: 0, count: 0 };
+        });
+
+        state.forEach((part, pi) => {
+          if (!enabled[pi]) return;
+          for (let s = 0; s < 5; s++) {
+            const mat = part.slots[s];
+            if (mat === "なし") continue; // なしは数えない
+            const st = slotStats(s, part.confirmed);
+            totals[mat].exp += st.exp;
+            totals[mat].e80 += st.e80;
+            totals[mat].e95 += st.e95;
+            totals[mat].count += 1;
+          }
+        });
+        return totals;
+      }
+
+      function renderTotals() {
+        const totals = computeTotals();
+        let grid = "";
+        MATERIA_TYPES.forEach((m) => {
+          if (m === "なし") return;
+          const t = totals[m];
+          if (t.e95 === 0) return;
+          grid += `<div class="matbox">
+      <div class="name">${m}</div>
+      <div class="big">${t.e95}<small> 個</small></div>
+      <div class="extra">80%:${t.e80}個 ／ 期待値:${fmt(t.exp)}個</div>
+    </div>`;
+        });
+        if (grid === "")
+          grid = `<div style="color:var(--sub)">ONになっている部位がありません。</div>`;
+        document.getElementById("totalGrid").innerHTML = grid;
+      }
+
+      // マテリアによるステータス上昇合計
+      function computeMateriaStats() {
+        const add = { g: 0, c: 0, p: 0 };
+        state.forEach((part, pi) => {
+          if (!enabled[pi]) return;
+          part.slots.forEach((mat) => {
+            const ms = MATERIA_STATS[mat];
+            if (ms) add[ms.stat] += ms.value;
+          });
+        });
+        return add;
+      }
+
+      function renderFinalStats() {
+        const mat = computeMateriaStats();
+        const v = (id) => parseInt(document.getElementById(id).value) || 0;
+        const base = { g: v("base_g"), c: v("base_c"), p: v("base_p") };
+        const buff = { g: v("buff_g"), c: v("buff_c"), p: v("buff_p") };
+        const ovf = { g: v("ovf_g"), c: v("ovf_c"), p: v("ovf_p") };
+
+        const defs = [
+          { key: "g", label: "獲得力" },
+          { key: "c", label: "技術力" },
+          { key: "p", label: "GP" },
+        ];
+
+        let html = "";
+        defs.forEach((d) => {
+          const k = d.key;
+          const total = base[k] + mat[k] + ovf[k] + buff[k];
+          html += `<div class="statbox">
+      <div class="label">${d.label}</div>
+      <div class="val">${total}</div>
+      <div class="breakdown">
+        ベース ${base[k]} ＋ <b>マテリア ${mat[k] >= 0 ? "+" : ""}${mat[k]}</b><br>
+        ＋食事薬 ${buff[k]} ＋補正 ${ovf[k]}
+      </div>
+    </div>`;
+        });
+        document.getElementById("finalStats").innerHTML = html;
+      }
+
+      // ===== UIイベント =====
+      document
+        .getElementById("jobSelect")
+        .addEventListener("change", (e) => loadJob(e.target.value));
+      document.getElementById("checkAll").addEventListener("click", () => {
+        enabled = enabled.map(() => true);
+        render();
+      });
+      document.getElementById("uncheckAll").addEventListener("click", () => {
+        enabled = enabled.map(() => false);
+        render();
+      });
+      document
+        .getElementById("resetBtn")
+        .addEventListener("click", () => loadJob(currentJob));
+      [
+        "base_g",
+        "base_c",
+        "base_p",
+        "buff_g",
+        "buff_c",
+        "buff_p",
+        "ovf_g",
+        "ovf_c",
+        "ovf_p",
+      ].forEach((id) => {
+        document.getElementById(id).addEventListener("input", renderFinalStats);
+      });
+
+      loadJob("gatherer");
+    </script>
+  </body>
+</html>
