@@ -134,6 +134,54 @@
         opacity: 0.6;
         font-size: 0.8em;
       }
+      .dev-section {
+        max-width: 1100px;
+        margin: 30px auto 0;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 14px 20px;
+      }
+      .dev-section summary {
+        cursor: pointer;
+        font-size: 0.95em;
+        user-select: none;
+        opacity: 0.8;
+      }
+      .dev-section summary:hover {
+        opacity: 1;
+      }
+      .dev-list {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .dev-list a {
+        color: #9ecbff;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1.4; /* ← 追加：行の高さを揃える */
+        transition: background 0.15s;
+      }
+      .dev-list a:hover {
+        background: rgba(255, 255, 255, 0.12);
+        text-decoration: underline;
+      }
+      .dev-list .dev-icon {
+        font-size: 1.2em;
+        font-family:
+          "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        line-height: 1; /* ← 追加：アイコンの行高を1に固定 */
+        display: inline-flex; /* ← 追加：flexで中央配置 */
+        align-items: center;
+        transform: translateY(-1px); /* ← 微調整：1pxだけ上にずらす */
+      }
     </style>
   </head>
   <body>
@@ -187,7 +235,7 @@
 
       const DEV_TOOLS = [
         {
-          filename: "materia_sim",
+          filename: "materia_sim.html",
           title: "禁断シミュ",
         },
         // 開発中のものがあればここに追加
@@ -339,6 +387,22 @@
           enableDragAndDrop(card);
           grid.appendChild(card);
         });
+
+        const devList = document.getElementById("dev-list");
+        if (devList) {
+          devList.innerHTML = "";
+          if (DEV_TOOLS.length === 0) {
+            devList.innerHTML =
+              '<div style="opacity:0.6;font-size:0.85em;padding:6px 10px;">現在開発中のツールはありません</div>';
+          } else {
+            DEV_TOOLS.forEach((dev) => {
+              const link = document.createElement("a");
+              link.href = dev.filename;
+              link.innerHTML = ` ${dev.title} <span style="opacity:0.5;font-size:0.85em;margin-left:auto;">${dev.filename}</span>`;
+              devList.appendChild(link);
+            });
+          }
+        }
       }
 
       render();
