@@ -223,15 +223,20 @@
         color: var(--accent);
         letter-spacing: 1px;
       }
-      .weight-1 {
-        color: #7fb88a;
+      /* やりたい度ラベル */
+      .want-label {
+        color: var(--text-soft);
       }
+      /* 気の重さ：絵文字＋言葉。色は控えめに添えるだけ */
+      .weight-1 {
+        color: #5fa874;
+      } /* 軽い */
       .weight-2 {
         color: #d8a24a;
-      }
+      } /* ちょい重い */
       .weight-3 {
-        color: #d07d6e;
-      }
+        color: #9a8f86;
+      } /* 重い：くすませて圧を出さない */
       .memo {
         font-size: 0.85rem;
         color: var(--text);
@@ -370,11 +375,11 @@
                   </select>
                 </div>
                 <div>
-                  <label for="weight">気が重い度</label>
+                  <label for="weight">やる気</label>
                   <select id="weight">
-                    <option value="1" selected>軽い</option>
-                    <option value="2">ちょい重い</option>
-                    <option value="3">重い</option>
+                    <option value="1" selected>ルンルン</option>
+                    <option value="2">ふつう</option>
+                    <option value="3">おっくう</option>
                   </select>
                 </div>
                 <div>
@@ -419,8 +424,8 @@
               <select id="sort" onchange="render()">
                 <option value="created">追加順</option>
                 <option value="want">やりたい度が高い順</option>
-                <option value="light">気が軽い順</option>
-                <option value="heavyWant">重いけどやりたい順</option>
+                <option value="light">やる気がある順</option>
+                <option value="heavyWant">おっくうだけどやりたい順</option>
               </select>
             </div>
             <button class="btn-sub" onclick="copyMarkdown()">
@@ -446,7 +451,9 @@
       /* ===== 定数・状態 ===== */
       const STORAGE_KEY = "yaritai-dana-v1";
       const TIMINGS = ["今日", "今週", "そのうち", "いつか", "保留"]; // 表示順
-      const WEIGHT_LABELS = { 1: "軽い", 2: "ちょい重い", 3: "重い" };
+      const WEIGHT_LABELS = { 1: "ルンルン", 2: "ふつう", 3: "おっくう" };
+      // やる気：絵文字で気分を直感的に
+      const WEIGHT_EMOJI = { 1: "😆", 2: "😊", 3: "😑" };
 
       let items = load(); // 全データ
       let editingId = null; // 編集中のID（nullなら新規追加モード）
@@ -665,8 +672,8 @@
           <div class="item-title">${escapeHtml(it.title)}</div>
         </div>
         <div class="meta">
-          <span class="stars">${stars(it.want)}</span>
-          <span class="weight-${it.weight}">${WEIGHT_LABELS[it.weight]}</span>
+          <span class="stars"><span class="want-label">やりたい </span>${stars(it.want)}</span>
+          <span class="weight-${it.weight}">${WEIGHT_EMOJI[it.weight]} ${WEIGHT_LABELS[it.weight]}</span>
         </div>
         ${tagsHtml}
         ${it.memo ? `<div class="memo">${escapeHtml(it.memo)}</div>` : ""}
@@ -755,7 +762,7 @@
           group.forEach((it) => {
             md += `- ${it.title}\n`;
             md += `  - やりたい度：${stars(it.want)}\n`;
-            md += `  - 気が重い度：${WEIGHT_LABELS[it.weight]}\n`;
+            md += `  - やる気：${WEIGHT_LABELS[it.weight]}\n`;
             if (it.tags && it.tags.length)
               md += `  - タグ：${it.tags.join(", ")}\n`;
             if (it.memo) md += `  - メモ：${it.memo}\n`;
@@ -766,7 +773,7 @@
         md += `\n# AIへの依頼\n`;
         md += `この「やりたいことリスト」を見て、\n`;
         md += `1. 今日やると満足度が高そうなものを3つ選んでください\n`;
-        md += `2. 気が重いけどやりたいものを、小さな一歩に分解してください\n`;
+        md += `2. おっくうだけどやりたいものを、小さな一歩に分解してください\n`;
         md += `3. すぐできる順に並べてください\n`;
         md += `4. 無理しない一日の流れを提案してください\n`;
 
