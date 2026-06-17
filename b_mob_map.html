@@ -17,6 +17,26 @@
         padding: 20px;
       }
 
+      h1 {
+        display: flex; /* ← 追加 */
+        align-items: baseline; /* ← 追加（文字の下端を揃える） */
+        text-align: left;
+        font-size: 24px;
+        color: #2c3e50;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #34495e;
+        padding-bottom: 10px;
+      }
+
+      h1 .sub {
+        margin-left: auto; /* ← これで右端に押しやる */
+        font-size: 13px; /* 小さく */
+        font-weight: normal;
+        color: #7f8c8d; /* 薄めの色 */
+        position: relative; /* ← 追加 */
+        top: 10px; /* ← 追加（下に動く量。数字を増やすほど下に） */
+      }
+
       /* ===== タブ（大タイトル） ===== */
       .tab-buttons {
         display: flex;
@@ -154,6 +174,7 @@
     </style>
   </head>
   <body>
+    <h1>FF14 B Rank Map<span class="sub">Images: © SQUARE ENIX</span></h1>
     <!-- ========== タブボタン（大タイトル） ========== -->
     <div class="tab-buttons">
       <button class="active" onclick="showTab('tab1', this)">蒼天</button>
@@ -319,8 +340,8 @@
               <img class="thumb" src="images/Manes.jpg" alt="" />
             </div>
             <div class="cell">
-              <div class="cell-title">小タイトル</div>
-              <img class="thumb" src="images/xxx.jpg" alt="" />
+              <div class="cell-title">キワ</div>
+              <img class="thumb" src="images/Kiwa.jpg" alt="" />
             </div>
           </div>
         </div>
@@ -431,7 +452,7 @@
     </div>
 
     <!-- ========== タブ4 ========== -->
-    <div id="tab4" class="tab-panel active">
+    <div id="tab4" class="tab-panel">
       <div class="set-grid">
         <div class="pair">
           <div class="pair-title">ラヴィリンソス</div>
@@ -520,7 +541,7 @@
     </div>
 
     <!-- ========== タブ5 ========== -->
-    <div id="tab5" class="tab-panel active">
+    <div id="tab5" class="tab-panel">
       <div class="set-grid">
         <div class="pair">
           <div class="pair-title">オルコ・パチャ</div>
