@@ -443,8 +443,8 @@
               <img class="thumb" src="images/xxx.jpg" alt="" />
             </div>
             <div class="cell">
-              <div class="cell-title">小タイトル</div>
-              <img class="thumb" src="images/xxx.jpg" alt="" />
+              <div class="cell-title">ディーコン</div>
+              <img class="thumb" src="images/Deacon.jpg" alt="" />
             </div>
           </div>
         </div>
@@ -650,6 +650,9 @@
           .forEach((b) => b.classList.remove("active"));
         document.getElementById(id).classList.add("active");
         btn.classList.add("active");
+
+        // ▼ 追加：開いたタブのIDを記憶しておく
+        localStorage.setItem("activeTab", id);
       }
 
       // 拡大表示
@@ -676,6 +679,22 @@
       // Escキーでも閉じる
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") closeLightbox();
+      });
+
+      // ▼ 追加：ページ読み込み時に、前回開いていたタブを復元する
+      window.addEventListener("DOMContentLoaded", () => {
+        const savedTab = localStorage.getItem("activeTab");
+        if (!savedTab) return; // 保存がなければ何もしない（初期状態のtab1のまま）
+
+        // 保存されたIDに対応するボタンを探す
+        const btn = document.querySelector(
+          `.tab-buttons button[onclick*="${savedTab}"]`,
+        );
+
+        // パネルとボタンが両方存在するときだけ復元（IDズレ対策）
+        if (document.getElementById(savedTab) && btn) {
+          showTab(savedTab, btn);
+        }
       });
     </script>
   </body>
