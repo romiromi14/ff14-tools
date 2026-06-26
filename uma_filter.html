@@ -166,6 +166,27 @@
       .tag.clickable {
         text-decoration: none;
       } /* タグは下線なしで色だけ */
+      /* 血統表 */
+      .pedigree {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 14px;
+        margin: 4px 0 10px;
+      }
+      .ped-col {
+        background: #f7f9fc;
+        border-radius: 6px;
+        padding: 8px 10px;
+      }
+      .ped-main {
+        font-size: 0.92rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .ped-sub {
+        font-size: 0.82rem;
+        color: #666;
+      }
     </style>
   </head>
   <body>
@@ -227,8 +248,16 @@
         {
           id: "special_week",
           name: "スペシャルウィーク",
-          sire: "サンデーサイレンス",
-          broodmareSire: "マルゼンスキー",
+          sire: "サンデーサイレンス", // ← フィルタ用に父だけは今まで通り残す
+          pedigree: {
+            // ← カード表示用の血統表（2代分）
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "キャンペンガール",
+            damSire: "マルゼンスキー",
+            damDam: "レディーシラオキ",
+          },
           g1wins: [
             "東京優駿(日本ダービー)",
             "ジャパンカップ",
@@ -240,18 +269,25 @@
           offspring: [
             { name: "ブエナビスタ", id: "buena_vista" }, // 実装馬→リンク化
             { name: "シーザリオ", id: "cesario" }, // 実装馬→リンク化
-            { name: "トーホウジャッカル", id: null }, // 未実装→ただの文字
+            { name: "ローマンレジェンド", id: null }, // 未実装→ただの文字
           ],
         },
         {
           id: "silence_suzuka",
           name: "サイレンススズカ",
           sire: "サンデーサイレンス",
-          broodmareSire: "ノーザンテースト", // 母ワキアの父
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ワキア",
+            damSire: "Miswaki",
+            damDam: "Rascal Rascal",
+          },
           g1wins: ["宝塚記念"],
           birthYear: 1994,
           birthDate: "1994年5月1日",
-          offspring: [], // 産駒なし（早世のため）
+          offspring: [],
         },
         {
           id: "tokai_teio",
@@ -266,6 +302,31 @@
             { name: "トウカイポイント", id: null },
           ],
         },
+        //マルゼンスキー
+        {
+          id: "fuji_kiseki",
+          name: "フジキセキ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ミルレーサー",
+            damSire: "Le Fabuleux",
+            damDam: "Marston's Mill",
+          },
+          g1wins: ["朝日杯フューチュリティステークス"],
+          birthYear: 1992,
+          birthDate: "1992年4月15日",
+          offspring: [],
+        },
+        //オグリキャップ
+        //ゴールドシップ
+        //ウオッカ
+        //ダイワスカーレット
+        //タイキシャトル
+        //グラスワンダー
+        //ヒシアマゾン
         {
           id: "mejiro_mcqueen",
           name: "メジロマックイーン",
@@ -276,6 +337,9 @@
           birthDate: "1987年4月3日",
           offspring: [{ name: "メジロブライト", id: null }],
         },
+        //エルコンドルパサー
+        //テイエムオペラオー
+        //ナリタブライアン
         {
           id: "symboli_rudolf",
           name: "シンボリルドルフ",
@@ -295,18 +359,298 @@
             { name: "トウカイテイオー", id: "tokai_teio" }, // 実装馬→リンク化
           ],
         },
+        //エアグルーヴ
+        //アグネスデジタル
+        //セイウンスカイ
+        //タマモクロス
+        //ファインモーション
+        //ビワハヤヒデ
+        //マヤノトップガン
+        {
+          id: "manhattan_cafe",
+          name: "マンハッタンカフェ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "サトルチェンジ",
+            damSire: "Law Society",
+            damDam: "Santa Luciana",
+          },
+          g1wins: ["菊花賞", "天皇賞(春)", "有馬記念"],
+          birthYear: 1998,
+          birthDate: "1998年3月5日",
+          offspring: [
+            {
+              name: "レッドディザイア",
+              id: "red_desire",
+            },
+          ],
+        },
+        //ミホノブルボン
+        //メジロライアン
+        //ヒシアケボノ
+        //ユキノビジン
+        //ライスシャワー
+        //アイネスフウジン
+        {
+          id: "agnes_tachyon",
+          name: "アグネスタキオン",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "アグネスフローラ",
+            damSire: "ロイヤルスキー",
+            damDam: "アグネスレディー",
+          },
+          g1wins: ["皐月賞"],
+          birthYear: 1998,
+          birthDate: "1998年4月13日",
+          offspring: [
+            {
+              name: "ダイワスカーレット",
+              id: "daiwa_scariet",
+            },
+          ],
+        },
+        {
+          id: "admire_vega",
+          name: "アドマイヤベガ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ベガ",
+            damSire: "トニービン",
+            damDam: "アンティックヴァリュー",
+          },
+          g1wins: ["東京優駿(日本ダービー)"],
+          birthYear: 1996,
+          birthDate: "1996年3月12日",
+          offspring: [],
+        },
+        //イナリワン
+        //ウイニングチケット
+        {
+          id: "air_shakur",
+          name: "エアシャカール",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "アイドリームドアドリーム",
+            damSire: "Well Decorated",
+            damDam: "Hidden Trail",
+          },
+          g1wins: ["皐月賞", "菊花賞"],
+          birthYear: 1997,
+          birthDate: "1997年2月26日",
+          offspring: [],
+        },
+        //エイシンフラッシュ
+        //カレンチャン
+        //カワカミプリンセス
+        //ゴールドシチー
+        //サクラバクシンオー
+        //シーキングザパール
+        //シンコウウインディ
+        //スイープトウショウ
+        //スーパークリーク
+        //スマートファルコン
+        {
+          id: "zenno_rob_roy",
+          name: "ゼンノロブロイ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ローミンレイチェル",
+            damSire: "マイニング",
+            damDam: "One Smart Lady",
+          },
+          g1wins: ["天皇賞(秋)", "ジャパンカップ", "有馬記念"],
+          birthYear: 2000,
+          birthDate: "2000年3月27日",
+          offspring: [],
+        },
+        //トーセンジョーダン
+        //ナカヤマフェスタ
+        //ナリタタイシン
+        //ニシノフラワー
+        //ハルウララ
+        //バンブーメモリー
+        //ビコーペガサス
+        {
+          id: "marvelous_sunday",
+          name: "マーベラスサンデー",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "モミジダンサー",
+            damSire: "ヴァイスリーガル",
+            damDam: "モミジII",
+          },
+          g1wins: ["宝塚記念"],
+          birthYear: 1992,
+          birthDate: "1992年5月31日",
+          offspring: [],
+        },
+        //マチカネフクキタル
+        //ミスターシービー
+        //メイショウドトウ
+        //メジロドーベル
+        //ナイスネイチャ
+        //キングヘイロー
+        //マチカネタンホイザ
+        //イクノディクタス
+        //メジロパーマー
+        //ダイタクヘリオス
+        //ツインターボ
+        //サトノダイヤモンド
+        //キタサンブラック
+        //サクラチヨノオー
+        //シリウスシンボリ
+        //メジロアルダン
+        //ヤエノムテキ
+        //ツルマルツヨシ
+        //メジロブライト
+        //デアリングタクト
+        //サクラローレル
+        //ナリタトップロード
+        //ヤマニンゼファー
+        //フリオーソ
+        //トランセンド
+        //エスポワールシチー
+        //ノースフライト
+        //シンボリクリスエス
+        //タニノギムレット
+        //ダイイチルビー
+        //メジロラモーヌ
+        //アストンマーチャン
+        //サトノクラウン
+        //シュヴァルグラン
+        //ヴィルシーナ
+        //ヴィブロス
+        //ダンツフレーム
+        //ケイエスミラクル
+        //ジャングルポケット
+        {
+          id: "believe",
+          name: "ビリーヴ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "グレートクリスティーヌ",
+            damSire: "Danzig",
+            damDam: "Great Lady M.",
+          },
+          g1wins: ["スプリンターズS", "高松宮記念"],
+          birthYear: 1998,
+          birthDate: "1998年4月26日",
+          offspring: [],
+        },
+        //ノーリーズン
+        {
+          id: "still_in_love",
+          name: "スティルインラブ",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ブラダマンテ",
+            damSire: "Roberto",
+            damDam: "Sulemeif",
+          },
+          g1wins: ["桜花賞", "優駿牝馬(オークス)", "秋華賞"],
+          birthYear: 2000,
+          birthDate: "2000年5月2日",
+          offspring: [],
+        },
+        //コパノリッキー
+        //ホッコータルマエ
+        //ワンダーアキュート
+        //サムソンビッグ
+        //サウンズオブアース
+        //ロイスアンドロイス
+        //カツラギエース
+        {
+          id: "neo_universe",
+          name: "ネオユニヴァース",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "ポインテッドパス",
+            damSire: "Kris",
+            damDam: "Silken Way",
+          },
+          g1wins: ["皐月賞", "東京優駿(日本ダービー)"],
+          birthYear: 2000,
+          birthDate: "2000年5月21日",
+          offspring: [
+            {
+              name: "ヴィクトワールピサ",
+              id: "victoire_pisa",
+            },
+            {
+              name: "サウンズオブアース",
+              id: "sounds_of_earth",
+            },
+          ],
+        },
+        //ヒシミラクル
+        //タップダンスシチー
+        //ドゥラメンテ
+        //ラインクラフト
+        //シーザリオ
+        {
+          id: "air_messiah",
+          name: "エアメサイア",
+          sire: "サンデーサイレンス",
+          pedigree: {
+            sire: "サンデーサイレンス",
+            sireSire: "Halo",
+            sireDam: "Wishing Well",
+            dam: "エアデジャヴー",
+            damSire: "ノーザンテースト",
+            damDam: "アイドリームドアドリーム",
+          },
+          g1wins: ["秋華賞"],
+          birthYear: 2002,
+          birthDate: "2002年2月4日",
+          offspring: [],
+        },
         {
           id: "buena_vista",
           name: "ブエナビスタ",
           sire: "スペシャルウィーク",
-          broodmareSire: "Caerleon",
+          pedigree: {
+            sire: "スペシャルウィーク",
+            sireSire: "サンデーサイレンス",
+            sireDam: "キャンペーンガール",
+            dam: "ビワハイジ",
+            damSire: "Caerleon",
+            damDam: "アグサン",
+          },
           g1wins: [
-            "阪神ジュベナイルフィリーズ",
             "桜花賞",
             "優駿牝馬(オークス)",
             "天皇賞(秋)",
-            "ヴィクトリアマイル",
             "ジャパンカップ",
+            "ヴィクトリアマイル",
+            "阪神ジュベナイルフィリーズ",
           ],
           birthYear: 2006,
           birthDate: "2006年3月14日",
@@ -400,6 +744,40 @@
         });
       }
 
+      // ---- 血統馬1頭分のクリック挙動を決めて span を返す ----
+      // 名前がDATAに実装馬として存在 → カードを開く / 無ければ → 父フィルタ
+      function pedigreeCell(horseName) {
+        if (!horseName) return "－";
+        // DATAの中に同名のウマ娘がいるか探す
+        const matched = DATA.find((u) => u.name === horseName);
+        if (matched) {
+          // 実装馬→クリックでその馬のカードへ
+          return `<span class="clickable" onclick="openCard('${matched.id}')">${horseName}</span>`;
+        }
+        // 未実装→クリックで父フィルタ
+        return `<span class="clickable" onclick="applyFilter('f-sire','${horseName}')">${horseName}</span>`;
+      }
+
+      // ---- 血統表(2代)のHTMLを組み立てる ----
+      function pedigreeTable(p) {
+        if (!p)
+          return `<div class="row" style="color:#aaa">血統データなし</div>`;
+        // 父系・母系を2列でグリッド表示
+        return `
+  <div class="pedigree">
+    <div class="ped-col">
+      <div class="ped-main">父：${pedigreeCell(p.sire)}</div>
+      <div class="ped-sub">父父：${pedigreeCell(p.sireSire)}</div>
+      <div class="ped-sub">父母：${pedigreeCell(p.sireDam)}</div>
+    </div>
+    <div class="ped-col">
+      <div class="ped-main">母：${pedigreeCell(p.dam)}</div>
+      <div class="ped-sub">母父：${pedigreeCell(p.damSire)}</div>
+      <div class="ped-sub">母母：${pedigreeCell(p.damDam)}</div>
+    </div>
+  </div>`;
+      }
+
       // ---- カード（詳細）を開く ----
       function openCard(id) {
         const u = BY_ID[id];
@@ -431,14 +809,14 @@
 
         // カード本体を描画
         document.getElementById("card-body").innerHTML = `
-    <h2>${u.name}</h2>
-    <div class="row"><span class="lbl">父</span><span class="clickable" onclick="applyFilter('f-sire','${u.sire}')">${u.sire}</span></div>
-    <div class="row"><span class="lbl">母父</span>${u.broodmareSire}</div>
-    <div class="row"><span class="lbl">勝利G1</span>${g1Html}</div>
-    <div class="row"><span class="lbl">生年月日</span>${u.birthDate}</div>
-    <div class="row"><span class="lbl">世代</span>${genOf(u)}年（${u.birthYear}年生）</div>
-    <div class="row"><span class="lbl">産駒</span>${offspringHtml}</div>
-  `;
+         <h2>${u.name}</h2>
+         <div class="row"><span class="lbl">血統（2代）</span></div>
+         ${pedigreeTable(u.pedigree)}
+         <div class="row"><span class="lbl">勝利G1</span>${g1Html}</div>
+         <div class="row"><span class="lbl">生年月日</span>${u.birthDate}</div>
+         <div class="row"><span class="lbl">世代</span>${genOf(u)}年（${u.birthYear}年生）</div>
+         <div class="row"><span class="lbl">産駒</span>${offspringHtml}</div>
+        `;
         document.getElementById("overlay").classList.add("open");
       }
 

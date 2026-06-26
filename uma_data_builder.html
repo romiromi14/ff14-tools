@@ -193,9 +193,34 @@
 
       <label class="field"
         >生年月日
-        <input type="date" id="birth" />
+        <div
+          style="display: flex; gap: 8px; align-items: center; margin-top: 4px"
+        >
+          <input
+            type="number"
+            id="b-year"
+            placeholder="西暦"
+            style="width: 90px"
+            maxlength="4"
+          />
+          <span>年</span>
+          <input
+            type="number"
+            id="b-month"
+            placeholder="月"
+            style="width: 60px"
+          />
+          <span>月</span>
+          <input
+            type="number"
+            id="b-day"
+            placeholder="日"
+            style="width: 60px"
+          />
+          <span>日</span>
+        </div>
         <span class="hint"
-          >カレンダーから選択。生年・世代(生年+3)・表示用テキストは自動で作るよ。</span
+          >西暦4桁を入れると自動で「月」へ移動するよ。生年・世代・表示テキストは自動生成。</span
         >
       </label>
     </div>
@@ -241,6 +266,8 @@
    - 増やしたいレースがあればこの配列に足すだけ
    ========================================================= */
       const RACE_LIST = {
+        "2歳G1": ["阪神JF", "朝日杯FS", "ホープフルS"],
+
         "クラシック・三冠系": [
           "皐月賞",
           "東京優駿(日本ダービー)",
@@ -248,33 +275,26 @@
           "桜花賞",
           "優駿牝馬(オークス)",
           "秋華賞",
+          "NHKマイルC",
         ],
         古馬中長距離: [
+          "大阪杯",
           "天皇賞(春)",
-          "天皇賞(秋)",
           "宝塚記念",
-          "有馬記念",
+          "天皇賞(秋)",
           "ジャパンカップ",
+          "有馬記念",
+          "エリザベス女王杯",
         ],
         "マイル・短距離": [
           "安田記念",
-          "マイルチャンピオンシップ",
+          "マイルCS",
           "ヴィクトリアマイル",
-          "スプリンターズステークス",
+          "スプリンターズS",
           "高松宮記念",
-          "NHKマイルカップ",
         ],
-        "牝馬・その他G1": ["エリザベス女王杯", "大阪杯"],
-        "2歳G1": [
-          "阪神ジュベナイルフィリーズ",
-          "朝日杯フューチュリティステークス",
-          "ホープフルステークス",
-        ],
-        ダートG1: [
-          "フェブラリーステークス",
-          "チャンピオンズカップ",
-          "ジャパンダートクラシック",
-        ],
+
+        ダートG1: ["フェブラリーS", "チャンピオンズカップ"],
       };
 
       // ---- レースのチェックボックスを生成 ----
@@ -305,8 +325,8 @@
         row.innerHTML = `
     <input type="text" class="off-name" placeholder="産駒の名前">
     <select class="off-type">
-      <option value="plain">未実装</option>
       <option value="linked">実装馬</option>
+      <option value="plain">未実装</option>
     </select>
     <input type="text" class="off-id" placeholder="内部ID（実装馬のみ）" style="flex:.8;padding:6px 8px;border:1px solid #ccc;border-radius:6px;">
     <button type="button" class="del">×</button>
@@ -332,7 +352,10 @@
           damSire: document.getElementById("ped-ds").value.trim(),
           damDam: document.getElementById("ped-dd").value.trim(),
         };
-        const birth = document.getElementById("birth").value; // "1995-05-02" 形式
+        // --- 生年月日を3欄から取得 ---
+        const y = document.getElementById("b-year").value.trim();
+        const m = document.getElementById("b-month").value.trim();
+        const d = document.getElementById("b-day").value.trim();
 
         // 必須チェック（ゆるめ）
         if (!id || !name) {
@@ -341,14 +364,12 @@
         }
 
         // --- 生年月日まわりを変換 ---
-        // birth が空でも落ちないようにする
         let birthYear = null,
           birthDate = "";
-        if (birth) {
-          const [y, m, d] = birth.split("-"); // ["1995","05","02"]
+        if (y) {
           birthYear = Number(y);
-          // 先頭ゼロを消して「1995年5月2日」の形に
-          birthDate = `${y}年${Number(m)}月${Number(d)}日`;
+          // 月日が入ってれば「1995年5月2日」、無ければ年だけ表示
+          birthDate = m && d ? `${y}年${Number(m)}月${Number(d)}日` : `${y}年`;
         }
 
         // --- 勝利G1を集める（チェック＋手入力） ---
@@ -395,17 +416,55 @@
         document.getElementById("output").value = json + ",";
       };
 
-      // ---- コピー ----
+      // ---- コピー（alert無し版。ボタンの文字でフィードバック） ----
       document.getElementById("copy").onclick = () => {
         const ta = document.getElementById("output");
+        const btn = document.getElementById("copy");
         if (!ta.value) {
-          alert("先にJSON生成してね");
+          // 未生成のときもalertを使わず、ボタンで知らせる
+          const orig = btn.textContent;
+          btn.textContent = "先にJSON生成してね";
+          setTimeout(() => {
+            btn.textContent = orig;
+          }, 1500); // 1.5秒で元に戻す
           return;
         }
         ta.select();
         navigator.clipboard.writeText(ta.value);
-        alert("コピーしたよ！メインHTMLの DATA = [ の中に貼り付けて。");
+
+        // ボタンの表示を一時的に「コピー済」に変える
+        const orig = btn.textContent; // 元の文字を覚えておく
+        btn.textContent = "✓ コピー済！";
+        btn.style.background = "#3aa856"; // 緑にして分かりやすく
+        setTimeout(() => {
+          // 1.5秒後に元へ戻す
+          btn.textContent = orig;
+          btn.style.background = ""; // 色も元に戻す
+        }, 1500);
       };
+
+      /* =========================================================
+        生年月日：4桁入れたら次の欄へ自動フォーカス
+       ========================================================= */
+      const bYear = document.getElementById("b-year");
+      const bMonth = document.getElementById("b-month");
+      const bDay = document.getElementById("b-day");
+
+      // 西暦：4桁入力できたら「月」へ移動
+      bYear.addEventListener("input", () => {
+        if (bYear.value.length >= 4) {
+          bYear.value = bYear.value.slice(0, 4); // 5桁以上打てないよう4桁で切る
+          bMonth.focus(); // 月へフォーカス移動
+        }
+      });
+      // 月：確定したら「日」へ移動
+      bMonth.addEventListener("input", () => {
+        const v = bMonth.value;
+        // 2桁入った → 確定。または1桁目が2〜9 → それ以上の桁はありえないので確定
+        if (v.length >= 2 || (v.length === 1 && Number(v) >= 2)) {
+          bDay.focus();
+        }
+      });
 
       // 最初に産駒入力を1行出しておく
       addOffspringRow();
