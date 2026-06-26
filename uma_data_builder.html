@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ウマ娘データ整形ツール</title>
+    <style>
+      body {
+        font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f4f6f8;
+        color: #333;
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+      h2 {
+        font-size: 1rem;
+        margin: 20px 0 8px;
+        color: #4577d6;
+      }
+      .box {
+        background: #fff;
+        padding: 18px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 16px;
+      }
+      label.field {
+        display: block;
+        font-size: 0.82rem;
+        color: #666;
+        margin-bottom: 12px;
+      }
+      label.field input[type="text"],
+      label.field input[type="date"],
+      label.field select {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 10px;
+        font-size: 0.95rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        margin-top: 4px;
+      }
+      .hint {
+        font-size: 0.72rem;
+        color: #999;
+        margin-top: 2px;
+      }
+
+      /* レース名チェックボックス群 */
+      .race-group {
+        margin-bottom: 10px;
+      }
+      .race-group .grp-title {
+        font-size: 0.78rem;
+        color: #888;
+        margin-bottom: 4px;
+        font-weight: bold;
+      }
+      .race-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 2px 10px;
+      }
+      .race-grid label {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+      }
+
+      /* 産駒入力 */
+      .offspring-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+        align-items: center;
+      }
+      .offspring-row input[type="text"] {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .offspring-row select {
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      .offspring-row button {
+        border: none;
+        background: #e66;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 6px 10px;
+      }
+      .add-btn {
+        border: none;
+        background: #5b8def;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 7px 14px;
+        font-size: 0.85rem;
+      }
+
+      .gen-btn {
+        border: none;
+        background: #3aa856;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 10px 24px;
+        font-size: 1rem;
+      }
+      .gen-btn:hover {
+        background: #2e8c47;
+      }
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        height: 200px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 8px;
+      }
+      .copy-btn {
+        border: none;
+        background: #5b8def;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 7px 16px;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🛠 ウマ娘データ整形ツール</h1>
+    <p style="font-size: 0.85rem; color: #777">
+      入力して「JSON生成」を押すと、メインHTMLの
+      <code>DATA</code> 配列に貼り付けられるコードが出るよ。
+    </p>
+
+    <div class="box">
+      <h2>基本情報</h2>
+      <label class="field"
+        >内部ID（半角英数_。産駒リンク用）
+        <input type="text" id="id" placeholder="例: special_week" />
+        <span class="hint"
+          >他の馬の産駒からこのIDで紐づけるので、ユニークな半角英数で。</span
+        >
+      </label>
+      <label class="field"
+        >名前
+        <input type="text" id="name" placeholder="例: スペシャルウィーク" />
+      </label>
+      <label class="field"
+        >父
+        <input type="text" id="ped-sire" placeholder="例: サンデーサイレンス" />
+      </label>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px">
+        <label class="field"
+          >┗ 父父<input type="text" id="ped-ss" placeholder="父の父"
+        /></label>
+        <label class="field"
+          >┗ 父母<input type="text" id="ped-sd" placeholder="父の母"
+        /></label>
+      </div>
+      <label class="field"
+        >母
+        <input type="text" id="ped-dam" placeholder="例: キャンペンガール" />
+      </label>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px">
+        <label class="field"
+          >┗ 母父<input type="text" id="ped-ds" placeholder="母の父"
+        /></label>
+        <label class="field"
+          >┗ 母母<input type="text" id="ped-dd" placeholder="母の母"
+        /></label>
+      </div>
+
+      <label class="field"
+        >生年月日
+        <input type="date" id="birth" />
+        <span class="hint"
+          >カレンダーから選択。生年・世代(生年+3)・表示用テキストは自動で作るよ。</span
+        >
+      </label>
+    </div>
+
+    <div class="box">
+      <h2>勝利G1（チェックで選択）</h2>
+      <div id="race-area"></div>
+      <label class="field" style="margin-top: 10px"
+        >▼ 一覧に無いG1を手入力で追加（カンマ区切り）
+        <input
+          type="text"
+          id="g1-extra"
+          placeholder="例: エリザベス女王杯, 安田記念"
+        />
+      </label>
+    </div>
+
+    <div class="box">
+      <h2>産駒</h2>
+      <div id="offspring-area"></div>
+      <button class="add-btn" id="add-offspring" type="button">
+        ＋ 産駒を追加
+      </button>
+      <p class="hint" style="margin-top: 8px">
+        「実装馬」を選んだ場合はその馬の内部IDを入力（カードからクリックで飛べるようになる）。「未実装」ならID欄は空でOK。
+      </p>
+    </div>
+
+    <div class="box">
+      <button class="gen-btn" id="generate" type="button">JSON生成 ▼</button>
+      <textarea
+        id="output"
+        placeholder="ここに生成されたコードが出ます"
+        readonly
+      ></textarea>
+      <br /><button class="copy-btn" id="copy" type="button">📋 コピー</button>
+    </div>
+
+    <script>
+      /* =========================================================
+   レース一覧（チェックボックスの選択肢）
+   - メインHTMLの g1wins に入る表記とそろえてある
+   - 増やしたいレースがあればこの配列に足すだけ
+   ========================================================= */
+      const RACE_LIST = {
+        "クラシック・三冠系": [
+          "皐月賞",
+          "東京優駿(日本ダービー)",
+          "菊花賞",
+          "桜花賞",
+          "優駿牝馬(オークス)",
+          "秋華賞",
+        ],
+        古馬中長距離: [
+          "天皇賞(春)",
+          "天皇賞(秋)",
+          "宝塚記念",
+          "有馬記念",
+          "ジャパンカップ",
+        ],
+        "マイル・短距離": [
+          "安田記念",
+          "マイルチャンピオンシップ",
+          "ヴィクトリアマイル",
+          "スプリンターズステークス",
+          "高松宮記念",
+          "NHKマイルカップ",
+        ],
+        "牝馬・その他G1": ["エリザベス女王杯", "大阪杯"],
+        "2歳G1": [
+          "阪神ジュベナイルフィリーズ",
+          "朝日杯フューチュリティステークス",
+          "ホープフルステークス",
+        ],
+        ダートG1: [
+          "フェブラリーステークス",
+          "チャンピオンズカップ",
+          "ジャパンダートクラシック",
+        ],
+      };
+
+      // ---- レースのチェックボックスを生成 ----
+      const raceArea = document.getElementById("race-area");
+      Object.entries(RACE_LIST).forEach(([group, races]) => {
+        const wrap = document.createElement("div");
+        wrap.className = "race-group";
+        wrap.innerHTML = `<div class="grp-title">${group}</div>`;
+        const grid = document.createElement("div");
+        grid.className = "race-grid";
+        races.forEach((r) => {
+          const lbl = document.createElement("label");
+          // value にレース名を入れておき、チェックされたものを集める
+          lbl.innerHTML = `<input type="checkbox" class="race-cb" value="${r}">${r}`;
+          grid.appendChild(lbl);
+        });
+        wrap.appendChild(grid);
+        raceArea.appendChild(wrap);
+      });
+
+      /* =========================================================
+   産駒入力行の追加／削除
+   ========================================================= */
+      const offArea = document.getElementById("offspring-area");
+      function addOffspringRow() {
+        const row = document.createElement("div");
+        row.className = "offspring-row";
+        row.innerHTML = `
+    <input type="text" class="off-name" placeholder="産駒の名前">
+    <select class="off-type">
+      <option value="plain">未実装</option>
+      <option value="linked">実装馬</option>
+    </select>
+    <input type="text" class="off-id" placeholder="内部ID（実装馬のみ）" style="flex:.8;padding:6px 8px;border:1px solid #ccc;border-radius:6px;">
+    <button type="button" class="del">×</button>
+  `;
+        row.querySelector(".del").onclick = () => row.remove(); // ×で行を削除
+        offArea.appendChild(row);
+      }
+      document.getElementById("add-offspring").onclick = addOffspringRow;
+
+      /* =========================================================
+   JSON生成
+   ========================================================= */
+      document.getElementById("generate").onclick = () => {
+        // --- 基本情報の取得 ---
+        const id = document.getElementById("id").value.trim();
+        const name = document.getElementById("name").value.trim();
+        // 血統6項目を取得
+        const ped = {
+          sire: document.getElementById("ped-sire").value.trim(),
+          sireSire: document.getElementById("ped-ss").value.trim(),
+          sireDam: document.getElementById("ped-sd").value.trim(),
+          dam: document.getElementById("ped-dam").value.trim(),
+          damSire: document.getElementById("ped-ds").value.trim(),
+          damDam: document.getElementById("ped-dd").value.trim(),
+        };
+        const birth = document.getElementById("birth").value; // "1995-05-02" 形式
+
+        // 必須チェック（ゆるめ）
+        if (!id || !name) {
+          alert("内部IDと名前は必須だよ");
+          return;
+        }
+
+        // --- 生年月日まわりを変換 ---
+        // birth が空でも落ちないようにする
+        let birthYear = null,
+          birthDate = "";
+        if (birth) {
+          const [y, m, d] = birth.split("-"); // ["1995","05","02"]
+          birthYear = Number(y);
+          // 先頭ゼロを消して「1995年5月2日」の形に
+          birthDate = `${y}年${Number(m)}月${Number(d)}日`;
+        }
+
+        // --- 勝利G1を集める（チェック＋手入力） ---
+        const checked = [...document.querySelectorAll(".race-cb:checked")].map(
+          (cb) => cb.value,
+        );
+        const extra = document
+          .getElementById("g1-extra")
+          .value.split(",")
+          .map((s) => s.trim())
+          .filter((s) => s); // カンマ区切りを配列化、空は除去
+        const g1wins = [...checked, ...extra];
+
+        // --- 産駒を集める ---
+        const offspring = [...document.querySelectorAll(".offspring-row")]
+          .map((row) => {
+            const oName = row.querySelector(".off-name").value.trim();
+            const oType = row.querySelector(".off-type").value;
+            const oId = row.querySelector(".off-id").value.trim();
+            if (!oName) return null; // 名前空の行は無視
+            // 実装馬かつID入力ありなら id をセット、それ以外は null
+            return { name: oName, id: oType === "linked" && oId ? oId : null };
+          })
+          .filter((o) => o); // null除去
+
+        // --- オブジェクトを組み立て ---
+        const obj = {
+          id,
+          name,
+          sire: ped.sire, // フィルタ用に父をトップにも持たせる
+          pedigree: ped, // 血統表(2代)
+          g1wins,
+          birthYear,
+          birthDate,
+          offspring,
+        };
+
+        // --- 末尾にカンマを付けて出力（配列に追記しやすいように） ---
+        // JSON.stringify の後、キーのクォートを外して見やすくする簡易整形
+        const json = JSON.stringify(obj, null, 2).replace(
+          /"([a-zA-Z]+)":/g,
+          "$1:",
+        ); // "id": → id:（メインHTMLの書式に合わせる）
+        document.getElementById("output").value = json + ",";
+      };
+
+      // ---- コピー ----
+      document.getElementById("copy").onclick = () => {
+        const ta = document.getElementById("output");
+        if (!ta.value) {
+          alert("先にJSON生成してね");
+          return;
+        }
+        ta.select();
+        navigator.clipboard.writeText(ta.value);
+        alert("コピーしたよ！メインHTMLの DATA = [ の中に貼り付けて。");
+      };
+
+      // 最初に産駒入力を1行出しておく
+      addOffspringRow();
+    </script>
+  </body>
+</html>
