@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ウマ娘フィルタリングツール</title>
+    <style>
+      /* ===== 全体のスタイル ===== */
+      body {
+        font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f4f6f8;
+        color: #333;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin-bottom: 16px;
+      }
+
+      /* ===== フィルタUI ===== */
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        background: #fff;
+        padding: 16px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 16px;
+      }
+      .filters label {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.8rem;
+        color: #666;
+        gap: 4px;
+      }
+      .filters select {
+        padding: 6px 10px;
+        font-size: 0.95rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        min-width: 160px;
+        background: #fff;
+      }
+      .reset-btn {
+        align-self: flex-end;
+        padding: 7px 16px;
+        border: none;
+        cursor: pointer;
+        background: #5b8def;
+        color: #fff;
+        border-radius: 6px;
+        font-size: 0.9rem;
+      }
+      .reset-btn:hover {
+        background: #4577d6;
+      }
+
+      /* ===== 結果一覧 ===== */
+      .count {
+        font-size: 0.85rem;
+        color: #888;
+        margin-bottom: 8px;
+      }
+      .result-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 8px;
+      }
+      .result-item {
+        background: #fff;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        transition: 0.15s;
+        border-left: 4px solid #5b8def;
+      }
+      .result-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+      }
+      .result-item .ri-name {
+        font-weight: bold;
+      }
+      .result-item .ri-sub {
+        font-size: 0.75rem;
+        color: #999;
+        margin-top: 2px;
+      }
+
+      /* ===== カード（モーダル） ===== */
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        z-index: 10;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        max-width: 460px;
+        width: 100%;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 24px;
+        position: relative;
+      }
+      .card h2 {
+        margin: 0 0 14px;
+        font-size: 1.3rem;
+      }
+      .card .close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        cursor: pointer;
+        font-size: 1.4rem;
+        color: #aaa;
+        border: none;
+        background: none;
+      }
+      .card .row {
+        margin-bottom: 10px;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+      .card .row .lbl {
+        color: #888;
+        font-size: 0.78rem;
+        display: block;
+      }
+      .card .tag {
+        display: inline-block;
+        background: #eef3ff;
+        color: #4577d6;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        margin: 2px 4px 2px 0;
+      }
+      /* 産駒リンク（実装馬はクリック可、未実装はただの文字） */
+      .offspring-link {
+        color: #5b8def;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .offspring-plain {
+        color: #555;
+      }
+      /* カード内のクリックでフィルタできる要素 */
+      .clickable {
+        color: #5b8def;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .tag.clickable {
+        text-decoration: none;
+      } /* タグは下線なしで色だけ */
+    </style>
+  </head>
+  <body>
+    <h1>🏇 ウマ娘フィルタリングツール</h1>
+
+    <!-- ===== フィルタUI（中身はJSで自動生成） ===== -->
+    <div class="filters">
+      <label
+        >父
+        <select id="f-sire">
+          <option value="">すべて</option>
+        </select>
+      </label>
+      <label
+        >勝利G1
+        <select id="f-g1">
+          <option value="">すべて</option>
+        </select>
+      </label>
+      <label
+        >生年
+        <select id="f-year">
+          <option value="">すべて</option>
+        </select>
+      </label>
+      <label
+        >世代（生年+3）
+        <select id="f-gen">
+          <option value="">すべて</option>
+        </select>
+      </label>
+      <button class="reset-btn" id="reset">リセット</button>
+    </div>
+
+    <div class="count" id="count"></div>
+    <div class="result-list" id="list"></div>
+
+    <!-- ===== カード表示用モーダル ===== -->
+    <div class="overlay" id="overlay">
+      <div class="card" id="card">
+        <button class="close" id="close">×</button>
+        <div id="card-body"></div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================================================
+   データ部分（ここに新しいウマ娘を追加していけばOK）
+   - id            : 内部ID。産駒リンクで紐づけるのに使う
+   - name          : 表示名
+   - sire          : 父
+   - broodmareSire : 母父
+   - g1wins        : 勝利G1（配列）
+   - birthYear     : 生年（世代は birthYear+3 で自動計算）
+   - birthDate     : 生年月日（表示用テキスト）
+   - offspring     : 産駒 [{name, id}]  id=実装馬のID / null=未実装
+   ========================================================= */
+      const DATA = [
+        {
+          id: "special_week",
+          name: "スペシャルウィーク",
+          sire: "サンデーサイレンス",
+          broodmareSire: "マルゼンスキー",
+          g1wins: [
+            "東京優駿(日本ダービー)",
+            "ジャパンカップ",
+            "天皇賞(春)",
+            "天皇賞(秋)",
+          ],
+          birthYear: 1995,
+          birthDate: "1995年5月2日",
+          offspring: [
+            { name: "ブエナビスタ", id: "buena_vista" }, // 実装馬→リンク化
+            { name: "シーザリオ", id: "cesario" }, // 実装馬→リンク化
+            { name: "トーホウジャッカル", id: null }, // 未実装→ただの文字
+          ],
+        },
+        {
+          id: "silence_suzuka",
+          name: "サイレンススズカ",
+          sire: "サンデーサイレンス",
+          broodmareSire: "ノーザンテースト", // 母ワキアの父
+          g1wins: ["宝塚記念"],
+          birthYear: 1994,
+          birthDate: "1994年5月1日",
+          offspring: [], // 産駒なし（早世のため）
+        },
+        {
+          id: "tokai_teio",
+          name: "トウカイテイオー",
+          sire: "シンボリルドルフ",
+          broodmareSire: "ナイスダンサー",
+          g1wins: ["東京優駿(日本ダービー)", "ジャパンカップ", "有馬記念"],
+          birthYear: 1988,
+          birthDate: "1988年4月20日",
+          offspring: [
+            { name: "ヤマニンマヒア", id: null },
+            { name: "トウカイポイント", id: null },
+          ],
+        },
+        {
+          id: "mejiro_mcqueen",
+          name: "メジロマックイーン",
+          sire: "メジロティターン",
+          broodmareSire: "リマンド", // 母メジロオーロラの父
+          g1wins: ["天皇賞(春)", "宝塚記念"],
+          birthYear: 1987,
+          birthDate: "1987年4月3日",
+          offspring: [{ name: "メジロブライト", id: null }],
+        },
+        {
+          id: "symboli_rudolf",
+          name: "シンボリルドルフ",
+          sire: "パーソロン",
+          broodmareSire: "スピードシンボリ", // 母スイートルナの父系
+          g1wins: [
+            "皐月賞",
+            "東京優駿(日本ダービー)",
+            "菊花賞",
+            "天皇賞(春)",
+            "ジャパンカップ",
+            "有馬記念",
+          ],
+          birthYear: 1981,
+          birthDate: "1981年3月13日",
+          offspring: [
+            { name: "トウカイテイオー", id: "tokai_teio" }, // 実装馬→リンク化
+          ],
+        },
+        {
+          id: "buena_vista",
+          name: "ブエナビスタ",
+          sire: "スペシャルウィーク",
+          broodmareSire: "Caerleon",
+          g1wins: [
+            "阪神ジュベナイルフィリーズ",
+            "桜花賞",
+            "優駿牝馬(オークス)",
+            "天皇賞(秋)",
+            "ヴィクトリアマイル",
+            "ジャパンカップ",
+          ],
+          birthYear: 2006,
+          birthDate: "2006年3月14日",
+          offspring: [],
+        },
+      ];
+
+      /* =========================================================
+   ロジック部分（基本ここは触らなくてOK）
+   ========================================================= */
+
+      // id→データ を引くための辞書を作っておく（産駒リンクのジャンプで使う）
+      const BY_ID = {};
+      DATA.forEach((u) => {
+        BY_ID[u.id] = u;
+      });
+
+      // 世代を計算するヘルパー（生年+3歳のクラシック年）
+      const genOf = (u) => u.birthYear + 3;
+
+      // ---- プルダウンの選択肢を、データから自動生成する ----
+      function fillSelect(selectId, values) {
+        const sel = document.getElementById(selectId);
+        // Setで重複を消し、ソートしてから option を追加
+        [...new Set(values)].sort().forEach((v) => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          sel.appendChild(opt);
+        });
+      }
+      fillSelect(
+        "f-sire",
+        DATA.map((u) => u.sire),
+      ); // 父
+      fillSelect(
+        "f-g1",
+        DATA.flatMap((u) => u.g1wins),
+      ); // 勝利G1（配列を平坦化）
+      fillSelect(
+        "f-year",
+        DATA.map((u) => String(u.birthYear)),
+      ); // 生年
+      fillSelect(
+        "f-gen",
+        DATA.map((u) => String(genOf(u))),
+      ); // 世代
+
+      // ---- 指定したフィルタ条件をセットして再描画する（カード内クリック用） ----
+      // selectId: 対象プルダウンのid / value: セットしたい値
+      function applyFilter(selectId, value) {
+        closeCard(); // まずカードを閉じる
+        // いったん全フィルタをリセット（その条件だけで絞りたいので）
+        ["f-sire", "f-g1", "f-year", "f-gen"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        document.getElementById(selectId).value = value; // 指定の条件だけセット
+        render(); // 再描画
+      }
+
+      // ---- フィルタ実行して一覧を描画 ----
+      function render() {
+        const fSire = document.getElementById("f-sire").value;
+        const fG1 = document.getElementById("f-g1").value;
+        const fYear = document.getElementById("f-year").value;
+        const fGen = document.getElementById("f-gen").value;
+
+        // 各条件をANDで絞り込む（空欄の条件は無視）
+        const filtered = DATA.filter((u) => {
+          if (fSire && u.sire !== fSire) return false;
+          if (fG1 && !u.g1wins.includes(fG1)) return false; // 配列に含まれるか
+          if (fYear && String(u.birthYear) !== fYear) return false;
+          if (fGen && String(genOf(u)) !== fGen) return false;
+          return true;
+        });
+
+        // 件数表示
+        document.getElementById("count").textContent =
+          `${filtered.length} 件ヒット`;
+
+        // 一覧のHTMLを組み立て
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+        filtered.forEach((u) => {
+          const div = document.createElement("div");
+          div.className = "result-item";
+          div.innerHTML = `<div class="ri-name">${u.name}</div>
+                     <div class="ri-sub">父:${u.sire} / ${genOf(u)}世代</div>`;
+          div.onclick = () => openCard(u.id); // クリックでカードを開く
+          list.appendChild(div);
+        });
+      }
+
+      // ---- カード（詳細）を開く ----
+      function openCard(id) {
+        const u = BY_ID[id];
+        if (!u) return;
+
+        // 産駒の表示を組み立て（実装馬はクリック可リンク、未実装はただの文字）
+        let offspringHtml = "なし";
+        if (u.offspring.length > 0) {
+          offspringHtml = u.offspring
+            .map((o) => {
+              if (o.id && BY_ID[o.id]) {
+                // 実装馬→クリックでその馬のカードへジャンプ
+                return `<span class="offspring-link" onclick="openCard('${o.id}')">${o.name}</span>`;
+              }
+              return `<span class="offspring-plain">${o.name}</span>`; // 未実装
+            })
+            .join("、");
+        }
+
+        // G1勝利をタグ表示に
+        const g1Html = u.g1wins.length
+          ? u.g1wins
+              .map(
+                (g) =>
+                  `<span class="tag clickable" onclick="applyFilter('f-g1','${g}')">${g}</span>`,
+              )
+              .join("")
+          : "なし";
+
+        // カード本体を描画
+        document.getElementById("card-body").innerHTML = `
+    <h2>${u.name}</h2>
+    <div class="row"><span class="lbl">父</span><span class="clickable" onclick="applyFilter('f-sire','${u.sire}')">${u.sire}</span></div>
+    <div class="row"><span class="lbl">母父</span>${u.broodmareSire}</div>
+    <div class="row"><span class="lbl">勝利G1</span>${g1Html}</div>
+    <div class="row"><span class="lbl">生年月日</span>${u.birthDate}</div>
+    <div class="row"><span class="lbl">世代</span>${genOf(u)}年（${u.birthYear}年生）</div>
+    <div class="row"><span class="lbl">産駒</span>${offspringHtml}</div>
+  `;
+        document.getElementById("overlay").classList.add("open");
+      }
+
+      // ---- カードを閉じる ----
+      function closeCard() {
+        document.getElementById("overlay").classList.remove("open");
+      }
+
+      /* =========================================================
+   イベント登録 ＆ 初期表示
+   ========================================================= */
+      ["f-sire", "f-g1", "f-year", "f-gen"].forEach((id) =>
+        document.getElementById(id).addEventListener("change", render),
+      );
+      document.getElementById("reset").onclick = () => {
+        ["f-sire", "f-g1", "f-year", "f-gen"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        render();
+      };
+      document.getElementById("close").onclick = closeCard;
+      // オーバーレイの外側クリックでも閉じる
+      document.getElementById("overlay").onclick = (e) => {
+        if (e.target.id === "overlay") closeCard();
+      };
+
+      render(); // 最初に全件表示
+    </script>
+  </body>
+</html>
